@@ -36,6 +36,8 @@ import CoreData
 extension Destination {
   @nonobjc
   public class func fetchRequest() -> NSFetchRequest<Destination> {
+    // sort by date
+    
     return NSFetchRequest<Destination>(entityName: "Destination")
   }
 
@@ -48,4 +50,14 @@ extension Destination {
 
 // MARK: Identifiable
 extension Destination: Identifiable {
+}
+extension Destination {
+    static func getAllDestinationItems() -> NSFetchRequest<Destination> {
+        let request: NSFetchRequest<Destination> = Destination.fetchRequest() as! NSFetchRequest<Destination>
+
+        let sortDiscriptor = NSSortDescriptor(key: "createdAt", ascending: true)
+        request.sortDescriptors = [sortDiscriptor]
+
+        return request
+    }
 }

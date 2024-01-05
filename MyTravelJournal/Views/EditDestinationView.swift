@@ -92,6 +92,13 @@ struct EditDestinationView: View {
             Text("Cancel")
           }
         }
+        ToolbarItem(placement: .navigationBarLeading) {
+          Button {
+            managedObjectContext.delete(destination)
+          } label: {
+            Text("delete")
+          }
+        }
       }
     }
     .onAppear {

@@ -62,6 +62,32 @@ final class CoreDataStack: ObservableObject {
     return sharedStore
   }
 
+  func setupCloudKitSubscription() {
+      let predicate = NSPredicate(format: "TRUEPREDICATE")
+      let subscription = CKQuerySubscription(recordType: "CD_Destination", predicate: predicate, options: [.firesOnRecordCreation, .firesOnRecordUpdate])
+
+      let notificationInfo = CKSubscription.NotificationInfo()
+      // Configure your notificationInfo...
+      subscription.notificationInfo = notificationInfo
+
+    ckContainer.privateCloudDatabase.save(subscription) { subscription, error in
+          if let error = error {
+              // Handle the error
+              print("Subscription failed: \(error.localizedDescription)")
+          } else {
+              print("Subscription set up successfully")
+          }
+      }
+    ckContainer.publicCloudDatabase.save(subscription) { subscription, error in
+          if let error = error {
+              // Handle the error
+              print("Subscription failed: \(error.localizedDescription)")
+          } else {
+              print("Subscription set up successfully")
+          }
+      }
+  }
+
   lazy var persistentContainer: NSPersistentCloudKitContainer = {
          let container = NSPersistentCloudKitContainer(name: "MyTravelJournal")
 
@@ -125,7 +151,9 @@ final class CoreDataStack: ObservableObject {
 
   private var _privatePersistentStore: NSPersistentStore?
   private var _sharedPersistentStore: NSPersistentStore?
-  private init() {}
+  private init() {
+    setupCloudKitSubscription()
+  }
 }
 
 // MARK: Save or delete from Core Data

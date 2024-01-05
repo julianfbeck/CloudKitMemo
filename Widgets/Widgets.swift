@@ -46,23 +46,35 @@ struct Provider: AppIntentTimelineProvider {
   }
   
   func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-    let entries: [SimpleEntry] = [fetchData(for: configuration)]
-    let timeline = Timeline(entries: entries, policy: .atEnd)
-    return timeline
+      print("Timeline requested with configuration: \(configuration)")
+      var entries: [SimpleEntry] = []
+
+      let currentDate = Date()
+      let updateInterval = 2 * 60 // 2 minutes in seconds
+
+      // Creating entries for the next hour (30 entries for every 2 minutes)
+      for minuteOffset in stride(from: 0, to: 60, by: 2) {
+        _ = Calendar.current.date(byAdding: .second, value: updateInterval * minuteOffset, to: currentDate)!
+          let entry = fetchData(for: configuration)
+        print("Timeline requested with configuration: \(entry)")
+          entries.append(entry)
+      }
+
+      let timeline = Timeline(entries: entries, policy: .atEnd)
+      return timeline
   }
+
   // Fetch data from CoreData
   private func fetchData(for configuration: ConfigurationAppIntent) -> SimpleEntry {
     // Create a new background context
     let context = CoreDataStack.shared.persistentContainer.viewContext
     
     // Create a fetch request for Destination
-    let fetchRequest: NSFetchRequest<Destination> = Destination.fetchRequest() 
+//    let fetchRequest: NSFetchRequest<Destination> = Destination.fetchRequest() 
     
     do {
-      let results = try context.fetch(fetchRequest)
-      for result in results {
-        print("Result: \(result.caption)")
-      }
+      let results = try context.fetch(Destination.getAllDestinationItems())
+      print(results.first?.caption ?? "no caption")
       return SimpleEntry(date: Date(), configuration: configuration, destination: results.first)
     } catch {
       // Handle errors

@@ -59,6 +59,7 @@ struct DestinationDetailView: View {
             .foregroundColor(.secondary)
             .padding(.bottom, 8)
         }
+        
       }
 
       Section {
