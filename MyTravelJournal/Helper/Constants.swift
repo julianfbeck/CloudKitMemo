@@ -31,4 +31,7 @@
 /// THE SOFTWARE.
 
 import Foundation
-let shared_container = "group.julanbeck.my-traveljournal"
+
+public class Constants {
+  public static let shared_container = "group.julanbeck.my-traveljournal"
+}

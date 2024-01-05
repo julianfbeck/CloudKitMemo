@@ -63,55 +63,65 @@ final class CoreDataStack: ObservableObject {
   }
 
   lazy var persistentContainer: NSPersistentCloudKitContainer = {
-    let container = NSPersistentCloudKitContainer(name: "MyTravelJournal")
+         let container = NSPersistentCloudKitContainer(name: "MyTravelJournal")
 
-    guard let privateStoreDescription = container.persistentStoreDescriptions.first else {
-      fatalError("Unable to get persistentStoreDescription")
-    }
-    let storesURL = privateStoreDescription.url?.deletingLastPathComponent()
-    privateStoreDescription.url = storesURL?.appendingPathComponent("private.sqlite")
-    let sharedStoreURL = storesURL?.appendingPathComponent("shared.sqlite")
-    guard let sharedStoreDescription = privateStoreDescription.copy() as? NSPersistentStoreDescription else {
-      fatalError("Copying the private store description returned an unexpected value.")
-    }
-    sharedStoreDescription.url = sharedStoreURL
+         // Access the App Group's shared container
+    guard let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Constants.shared_container) else {
+             fatalError("App Group directory not found")
+         }
 
-    guard let containerIdentifier = privateStoreDescription.cloudKitContainerOptions?.containerIdentifier else {
-      fatalError("Unable to get containerIdentifier")
-    }
-    let sharedStoreOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: containerIdentifier)
-    sharedStoreOptions.databaseScope = .shared
-    sharedStoreDescription.cloudKitContainerOptions = sharedStoreOptions
-    container.persistentStoreDescriptions.append(sharedStoreDescription)
+         guard let privateStoreDescription = container.persistentStoreDescriptions.first else {
+             fatalError("Unable to get persistentStoreDescription")
+         }
 
-    container.loadPersistentStores { loadedStoreDescription, error in
-      if let error = error as NSError? {
-        fatalError("Failed to load persistent stores: \(error)")
-      } else if let cloudKitContainerOptions = loadedStoreDescription.cloudKitContainerOptions {
-        guard let loadedStoreDescritionURL = loadedStoreDescription.url else {
-          return
-        }
+         // Set up the private store within the App Group container
+         privateStoreDescription.url = appGroupURL.appendingPathComponent("private.sqlite")
 
-        if cloudKitContainerOptions.databaseScope == .private {
-          let privateStore = container.persistentStoreCoordinator.persistentStore(for: loadedStoreDescritionURL)
-          self._privatePersistentStore = privateStore
-        } else if cloudKitContainerOptions.databaseScope == .shared {
-          let sharedStore = container.persistentStoreCoordinator.persistentStore(for: loadedStoreDescritionURL)
-          self._sharedPersistentStore = sharedStore
-        }
-      }
-    }
+         // Set up the shared store within the App Group container
+         let sharedStoreURL = appGroupURL.appendingPathComponent("shared.sqlite")
+         guard let sharedStoreDescription = privateStoreDescription.copy() as? NSPersistentStoreDescription else {
+             fatalError("Copying the private store description returned an unexpected value.")
+         }
+         sharedStoreDescription.url = sharedStoreURL
 
-    container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-    container.viewContext.automaticallyMergesChangesFromParent = true
-    do {
-      try container.viewContext.setQueryGenerationFrom(.current)
-    } catch {
-      fatalError("Failed to pin viewContext to the current generation: \(error)")
-    }
+         guard let containerIdentifier = privateStoreDescription.cloudKitContainerOptions?.containerIdentifier else {
+             fatalError("Unable to get containerIdentifier")
+         }
 
-    return container
-  }()
+         let sharedStoreOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: containerIdentifier)
+         sharedStoreOptions.databaseScope = .shared
+         sharedStoreDescription.cloudKitContainerOptions = sharedStoreOptions
+
+         container.persistentStoreDescriptions = [privateStoreDescription, sharedStoreDescription]
+
+         container.loadPersistentStores { loadedStoreDescription, error in
+             if let error = error as NSError? {
+                 fatalError("Failed to load persistent stores: \(error)")
+             } else if let cloudKitContainerOptions = loadedStoreDescription.cloudKitContainerOptions {
+                 guard let loadedStoreDescritionURL = loadedStoreDescription.url else {
+                     return
+                 }
+
+                 if cloudKitContainerOptions.databaseScope == .private {
+                     let privateStore = container.persistentStoreCoordinator.persistentStore(for: loadedStoreDescritionURL)
+                     self._privatePersistentStore = privateStore
+                 } else if cloudKitContainerOptions.databaseScope == .shared {
+                     let sharedStore = container.persistentStoreCoordinator.persistentStore(for: loadedStoreDescritionURL)
+                     self._sharedPersistentStore = sharedStore
+                 }
+             }
+         }
+
+         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+         container.viewContext.automaticallyMergesChangesFromParent = true
+         do {
+             try container.viewContext.setQueryGenerationFrom(.current)
+         } catch {
+             fatalError("Failed to pin viewContext to the current generation: \(error)")
+         }
+
+         return container
+     }()
 
   private var _privatePersistentStore: NSPersistentStore?
   private var _sharedPersistentStore: NSPersistentStore?

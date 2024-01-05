@@ -31,6 +31,11 @@
 		9A8BE09C2B45841300F521C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A8BE09B2B45841300F521C2 /* Assets.xcassets */; };
 		9A8BE0A02B45841300F521C2 /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A8BE08F2B45841200F521C2 /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9A8BE0A72B45876400F521C2 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8BE0A62B45876400F521C2 /* Constants.swift */; };
+		9ACFBC0C2B48652C00A31DB3 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A2495F2752F85800A88DE4 /* CoreDataStack.swift */; };
+		9ACFBC0D2B48652E00A31DB3 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8BE0A62B45876400F521C2 /* Constants.swift */; };
+		9ACFBC0E2B48653A00A31DB3 /* Destination+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215443302755DBF1003A52A7 /* Destination+CoreDataClass.swift */; };
+		9ACFBC0F2B48653D00A31DB3 /* Destination+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215443312755DBF1003A52A7 /* Destination+CoreDataProperties.swift */; };
+		9ACFBC102B48654100A31DB3 /* MyTravelJournal.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 2139E76B274FCCCC00FD2327 /* MyTravelJournal.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -363,9 +368,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9ACFBC0F2B48653D00A31DB3 /* Destination+CoreDataProperties.swift in Sources */,
+				9ACFBC0D2B48652E00A31DB3 /* Constants.swift in Sources */,
 				9A8BE0962B45841200F521C2 /* WidgetsBundle.swift in Sources */,
+				9ACFBC102B48654100A31DB3 /* MyTravelJournal.xcdatamodeld in Sources */,
 				9A8BE0982B45841200F521C2 /* Widgets.swift in Sources */,
 				9A8BE09A2B45841200F521C2 /* AppIntent.swift in Sources */,
+				9ACFBC0E2B48653A00A31DB3 /* Destination+CoreDataClass.swift in Sources */,
+				9ACFBC0C2B48652C00A31DB3 /* CoreDataStack.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

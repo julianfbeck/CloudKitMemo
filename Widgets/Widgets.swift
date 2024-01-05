@@ -1,15 +1,15 @@
 /// Copyright (c) 2024 Razeware LLC
-/// 
+///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
 /// in the Software without restriction, including without limitation the rights
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in
 /// all copies or substantial portions of the Software.
-/// 
+///
 /// Notwithstanding the foregoing, you may not use, copy, modify, merge, publish,
 /// distribute, sublicense, create a derivative work, and/or sell copies of the
 /// Software in any work that is designed, intended, or marketed for pedagogical or
@@ -17,7 +17,7 @@
 /// or information technology.  Permission for such use, copying, modification,
 /// merger, publication, distribution, sublicensing, creation of derivative works,
 /// or sale is expressly withheld.
-/// 
+///
 /// This project and source code may use libraries or frameworks that are
 /// released under various Open-Source licenses. Use of those libraries and
 /// frameworks are governed by their own individual licenses.
@@ -32,78 +32,112 @@
 
 import WidgetKit
 import SwiftUI
+import CloudKit
+import CoreData
 
 struct Provider: AppIntentTimelineProvider {
-    func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent())
-    }
-
-    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: configuration)
-    }
+  func placeholder(in context: Context) -> SimpleEntry {
+    let entry = fetchData(for: ConfigurationAppIntent())
+    return entry
+  }
+  
+  func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
+    fetchData(for: configuration)
+  }
+  
+  func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
+    let entries: [SimpleEntry] = [fetchData(for: configuration)]
+    let timeline = Timeline(entries: entries, policy: .atEnd)
+    return timeline
+  }
+  // Fetch data from CoreData
+  private func fetchData(for configuration: ConfigurationAppIntent) -> SimpleEntry {
+    // Create a new background context
+    let context = CoreDataStack.shared.persistentContainer.viewContext
     
-    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
-        }
-
-        return Timeline(entries: entries, policy: .atEnd)
+    // Create a fetch request for Destination
+    let fetchRequest: NSFetchRequest<Destination> = Destination.fetchRequest() 
+    
+    do {
+      let results = try context.fetch(fetchRequest)
+      for result in results {
+        print("Result: \(result.caption)")
+      }
+      return SimpleEntry(date: Date(), configuration: configuration, destination: results.first)
+    } catch {
+      // Handle errors
+      print("Error fetching data: \(error)")
+      // Return an entry with default or error state
+      return SimpleEntry(date: Date(), configuration: configuration, destination: nil)
     }
+  }
 }
+
+
+
 
 struct SimpleEntry: TimelineEntry {
-    let date: Date
-    let configuration: ConfigurationAppIntent
+  let date: Date
+  let configuration: ConfigurationAppIntent
+  let destination:  Destination?
 }
 
+
 struct WidgetsEntryView : View {
-    var entry: Provider.Entry
-
-    var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
-
-            Text("Favorite Emoji:")
-            Text(entry.configuration.favoriteEmoji)
+  var entry: Provider.Entry
+  var body: some View {
+    VStack {
+      if let destination = entry.destination {
+        VStack(alignment: .leading, spacing: 4) {
+          if let imageData = destination.image, let image = UIImage(data: imageData) {
+            Image(uiImage: image)
+              .resizable()
+              .scaledToFit()
+          }
+          Text(destination.caption)
+            .font(.headline)
+          Text(destination.details)
+            .font(.subheadline)
+          Text(destination.createdAt.description)
         }
+      } else {
+        Text("no")
+      }
+      Text("Time:")
+      Text(entry.date, style: .time)
     }
+    
+  }
 }
 
 struct Widgets: Widget {
-    let kind: String = "Widgets"
-
-    var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
-            WidgetsEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
-        }
+  let kind: String = "Widgets"
+  
+  var body: some WidgetConfiguration {
+    AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
+      WidgetsEntryView(entry: entry).environment(\.managedObjectContext, CoreDataStack.shared.context)
+        .containerBackground(.fill.tertiary, for: .widget)
     }
+  }
 }
 
 extension ConfigurationAppIntent {
-    fileprivate static var smiley: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "😀"
-        return intent
-    }
-    
-    fileprivate static var starEyes: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "🤩"
-        return intent
-    }
+  fileprivate static var smiley: ConfigurationAppIntent {
+    let intent = ConfigurationAppIntent()
+    intent.favoriteEmoji = "😀"
+    return intent
+  }
+  
+  fileprivate static var starEyes: ConfigurationAppIntent {
+    let intent = ConfigurationAppIntent()
+    intent.favoriteEmoji = "🤩"
+    return intent
+  }
 }
 
 #Preview(as: .systemSmall) {
-    Widgets()
+  Widgets()
 } timeline: {
-    SimpleEntry(date: .now, configuration: .smiley)
-    SimpleEntry(date: .now, configuration: .starEyes)
+  SimpleEntry(date: .now, configuration: .smiley, destination: nil)
+  SimpleEntry(date: .now, configuration: .starEyes, destination: nil)
 }
